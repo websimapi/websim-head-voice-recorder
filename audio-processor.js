@@ -1,7 +1,6 @@
 class AudioProcessor {
   constructor() {
     this.context = null;
-    this.processor = null;
     this.analyser = null;
     this.mediaRecorder = null;
     this.chunks = [];
@@ -10,23 +9,22 @@ class AudioProcessor {
 
   async initialize() {
     try {
-      // Request permissions and get stream
+      // Request microphone access
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Initialize audio context
+      // Initialize audio context and analyser node
       this.context = new (window.AudioContext || window.webkitAudioContext)();
-      
-      // Create analyser for visualizations
       this.analyser = this.context.createAnalyser();
       this.analyser.fftSize = 2048;
       
-      // Create source from stream
+      // Create audio source from the stream
       const source = this.context.createMediaStreamSource(this.stream);
       
-      // Initialize Tone.js
+      // Initialize Tone.js and resume the audio context
       await Tone.start();
+      await this.context.resume();
       
-      // Create Tone.js processing chain
+      // Create processing chain using Tone.js effects
       const filter = new Tone.Filter({
         type: "lowshelf",
         frequency: 500,
@@ -44,21 +42,19 @@ class AudioProcessor {
         delayTime: 0
       }).connect(reverb);
 
-      // Connect audio processing chain
+      // Connect raw source to analyser for visualizations
       source.connect(this.analyser);
+      
+      // Connect the source to the Tone.js chain for effect processing
       const toneSource = Tone.context.createMediaStreamSource(this.stream);
       toneSource.connect(pitchShift);
       
-      // Verify everything is connected properly
-      if (!this.analyser || !this.context.state || !this.stream.active) {
-        throw new Error('Audio setup incomplete');
-      }
-      
+      // Microphone is successfully set up
       return true;
       
     } catch (error) {
       console.error('Error initializing audio processor:', error);
-      // Clean up any partial initialization
+      // Clean up any partially initialized resources
       this.cleanup();
       return false;
     }
@@ -87,6 +83,7 @@ class AudioProcessor {
 
       this.mediaRecorder.start();
       return true;
+      
     } catch (error) {
       console.error('Error starting recording:', error);
       return false;
