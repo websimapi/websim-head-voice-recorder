@@ -10,17 +10,22 @@ class AudioProcessor {
 
   async initialize() {
     try {
+      // Request permissions only when initialize is called
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Initialize audio context only after user gesture
       this.context = new (window.AudioContext || window.webkitAudioContext)();
       
       // Create analyser for visualizations
       this.analyser = this.context.createAnalyser();
       this.analyser.fftSize = 2048;
       
-      // Set up Tone.js effects for head voice simulation
+      // Set up audio processing chain only after permissions granted
       const source = this.context.createMediaStreamSource(this.stream);
       
-      // Create effects chain
+      // Initialize Tone.js effects
+      await Tone.start();
+      
       const filter = new Tone.Filter({
         type: "lowshelf",
         frequency: 500,

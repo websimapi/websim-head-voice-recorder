@@ -10,17 +10,23 @@ const recordingsList = document.getElementById('recordingsList');
 const canvas = document.getElementById('visualizer');
 const canvasCtx = canvas.getContext('2d');
 
-async function initialize() {
-  audioProcessor = new AudioProcessor();
-  const initialized = await audioProcessor.initialize();
-  
-  if (!initialized) {
-    alert('Could not access microphone. Please ensure you have granted the necessary permissions.');
-    return;
-  }
+recordButton.addEventListener('click', handleRecordButtonClick);
 
-  recordButton.addEventListener('click', toggleRecording);
-  drawVisualizer();
+async function handleRecordButtonClick() {
+  if (!audioProcessor) {
+    // First time clicking - initialize
+    audioProcessor = new AudioProcessor();
+    const initialized = await audioProcessor.initialize();
+    
+    if (!initialized) {
+      alert('Could not access microphone. Please ensure you have granted the necessary permissions.');
+      return;
+    }
+    
+    drawVisualizer();
+  }
+  
+  toggleRecording();
 }
 
 function toggleRecording() {
@@ -137,7 +143,6 @@ function drawVisualizer() {
   draw();
 }
 
-window.addEventListener('load', initialize);
 window.addEventListener('beforeunload', () => {
   if (audioProcessor) {
     audioProcessor.cleanup();
