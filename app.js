@@ -13,20 +13,30 @@ const canvasCtx = canvas.getContext('2d');
 recordButton.addEventListener('click', handleRecordButtonClick);
 
 async function handleRecordButtonClick() {
-  if (!audioProcessor) {
-    // First time clicking - initialize
-    audioProcessor = new AudioProcessor();
-    const initialized = await audioProcessor.initialize();
-    
-    if (!initialized) {
-      alert('Could not access microphone. Please ensure you have granted the necessary permissions.');
-      return;
+  try {
+    if (!audioProcessor) {
+      // First time clicking - initialize
+      audioProcessor = new AudioProcessor();
+      const initialized = await audioProcessor.initialize();
+      
+      if (!initialized) {
+        throw new Error('Audio initialization failed');
+      }
+      
+      drawVisualizer();
     }
     
-    drawVisualizer();
+    toggleRecording();
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Could not access microphone. Please ensure you have granted the necessary permissions and try again.');
+    // Reset the audio processor so we can try again
+    if (audioProcessor) {
+      audioProcessor.cleanup();
+      audioProcessor = null;
+    }
   }
-  
-  toggleRecording();
 }
 
 function toggleRecording() {
